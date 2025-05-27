@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Cadastro{% endblock %}
+
+{% block content %}
+<div class="hero-section farol-background">
+    <div class="container text-center">
+        <h1 class="display-4">Salvador Expõe</h1>
+        <p class="lead">Cadastre-se para avaliar os bairros de Salvador e descobrir os melhores lugares para visitar e
+            morar!</p>
+    </div>
+</div>
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0 text-center"><i class="fas fa-user-plus me-2"></i>Cadastro</h3>
+                </div>
+                <div class="card-body p-4">
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+
+                        <div class="mb-3">
+                            {{ form.username|as_crispy_field }}
+                        </div>
+
+                        <div class="mb-3">
+                            {{ form.email|as_crispy_field }}
+                        </div>
+
+                        <div class="mb-3">
+                            {{ form.data_nascimento|as_crispy_field }}
+                        </div>
+
+                        <div class="mb-3">
+                            {{ form.password1|as_crispy_field }}
+                        </div>
+
+                        <div class="mb-3">
+                            {{ form.password2|as_crispy_field }}
+                        </div>
+
+                        <div class="mb-4 form-check">
+                            <input type="checkbox" class="form-check-input"
+                                id="{{ form.aceita_localizacao.id_for_label }}"
+                                name="{{ form.aceita_localizacao.html_name }}">
+                            <label class="form-check-label" for="{{ form.aceita_localizacao.id_for_label }}">
+                                <i class="fas fa-map-marker-alt me-1 text-primary"></i> Permitir que o site utilize
+                                minha localização
+                            </label>
+                            <div class="form-text">
+                                {{ form.aceita_localizacao.help_text }}
+                            </div>
+                        </div>
+
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-check-circle me-2"></i>Cadastrar
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                <div class="card-footer text-center py-3">
+                    <p class="mb-0">Já tem uma conta? <a href="{% url 'login' %}" class="fw-bold">Faça login</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+    // Script para obter localização do usuário quando o checkbox for marcado
+    document.getElementById('{{ form.aceita_localizacao.id_for_label }}').addEventListener('change', function () {
+        if (this.checked) {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(function (position) {
+                    console.log("Localização permitida:", position.coords.latitude, position.coords.longitude);
+                    // Aqui poderíamos armazenar a localização em um campo oculto
+                });
+            }
+        }
+    });
+</script>
+{% endblock %}
+{% endblock %}

@@ -1,0 +1,209 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+{% load bairro_tags %}
+
+{% block title %}Início{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <!-- Coluna do formulário de avaliação -->
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Avaliar Bairro</h4>
+                </div>
+                <div class="card-body">
+                    <form method="post" action="{% url 'avaliar_bairro' %}">
+                        {% csrf_token %}
+
+                        <div class="mb-3">
+                            {{ form.bairro|as_crispy_field }}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.nota.id_for_label }}" class="form-label">Nota*</label>
+                            <div class="nota-container">
+                                {% for radio in form.nota %}
+                                <div class="form-check nota-option">
+                                    {{ radio.tag }}
+                                    <label class="form-check-label nota-label" for="{{ radio.id_for_label }}">
+                                        {{ radio.choice_label }}
+                                    </label>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            <div id="feedback-nota" class="mt-2 text-muted fst-italic"></div>
+                        </div>
+
+                        <div class="mb-3">
+                            {{ form.comentario|as_crispy_field }}
+                        </div>
+
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">Enviar Avaliação</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-8 mb-4">
+            <div class="card h-100">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Mapa dos bairros</h4>
+                </div>
+                <div class="card-body">
+                    <div id="mapa-calor" style="height: 500px;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-4">
+        <h3 class="mb-3">Avaliações Recentes</h3>
+        <div class="row">
+            {% for avaliacao in avaliacoes_recentes %}
+            <div class="col-md-6 col-lg-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">{{ avaliacao.bairro.nome }}</h5>
+                        <span class="badge bg-primary rounded-pill">{{ avaliacao.nota }}/10</span>
+                    </div>
+                    <div class="card-body">
+                        {% if avaliacao.comentario %}
+                        <p>{{ avaliacao.comentario }}</p>
+                        {% else %}
+                        <p class="text-muted">Sem comentário</p>
+                        {% endif %}
+                    </div>
+                    <div class="card-footer text-muted">
+                        <small>Avaliado por {{ avaliacao.usuario.username }} em {{ avaliacao.data_criacao|date:"d/m/Y"
+                            }}</small>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="col-12">
+                <div class="alert alert-info">
+                    Nenhuma avaliação ainda. Seja o primeiro a avaliar um bairro!
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Ranking dos Bairros -->
+    <div class="mt-4">
+        <h3 class="mb-3">Ranking dos Bairros</h3>
+        {% ranking_bairros limit=10 %}
+    </div>
+</div>
+
+{% block extra_js %}
+<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+
+<script>
+    // Inicializar Select2 para o campo de bairro
+    $(document).ready(function () {
+        $('select[name="bairro"]').select2({
+            theme: 'bootstrap-5',
+            placeholder: 'Selecione um bairro ou digite para buscar',
+            allowClear: true,
+            width: '100%'
+        });
+
+        // Inicializar o mapa de calor
+        const mapa = L.map('mapa-calor').setView([-12.9714, -38.5014], 12);
+        
+        // Adicionar camada do OpenStreetMap
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(mapa);
+
+        // Dados para o heatmap
+        const dadosHeatmap = {{ dados_heatmap|safe }};
+
+        // Criar o heatmap
+        const heatmap = L.heatLayer(dadosHeatmap, {
+            radius: 25,
+            blur: 15,
+            maxZoom: 18,
+            minOpacity: 0.5,
+            maxOpacity: 0.8,
+            gradient: {
+                0.0: 'blue',       // 1-3
+                0.3: 'lightblue', // transição para médio
+                0.5: 'yellow',    // 4-6
+                0.7: 'orangered', // transição para leve
+                0.9: 'red',      // 7-9
+                1.0: 'red'       // 10
+            }
+        }).addTo(mapa);
+        
+        // Adicionar marcadores para cada bairro avaliado
+        dadosHeatmap.forEach(ponto => {
+            const [lat, lng, nota] = ponto;
+            const marker = L.circleMarker([lat, lng], {
+                radius: 5,
+                fillColor: '#ff7800',
+                color: '#000',
+                weight: 1,
+                opacity: 1,
+                fillOpacity: 0.8
+            }).addTo(mapa);
+            
+            marker.bindPopup(`Nota média: ${nota.toFixed(1)}`);
+        });
+
+        // Ajustar o zoom para mostrar todos os pontos
+        if (dadosHeatmap.length > 0) {
+            const bounds = L.latLngBounds(dadosHeatmap.map(ponto => [ponto[0], ponto[1]]));
+            mapa.fitBounds(bounds);
+        }
+    });
+
+    // Script para obter localização do usuário para sugerir bairros próximos
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(function (position) {
+            console.log("Localização obtida:", position.coords.latitude, position.coords.longitude);
+            // Aqui poderíamos usar a localização para mostrar os bairros mais próximos
+        });
+    }
+
+    // Script para animar a seleção da nota
+    document.querySelectorAll('.nota-option input[type="radio"]').forEach(radio => {
+        radio.addEventListener('change', function () {
+            // Remove a classe 'selected' de todos os labels
+            document.querySelectorAll('.nota-label').forEach(label => {
+                label.classList.remove('selected');
+            });
+
+            // Adiciona a classe 'selected' apenas ao label correspondente ao radio selecionado
+            if (this.checked) {
+                this.nextElementSibling.classList.add('selected');
+
+                // Mostrar mensagem baseada na nota
+                const nota = parseInt(this.value);
+                let mensagem = "";
+
+                if (nota >= 8) {
+                    mensagem = "Excelente avaliação!";
+                } else if (nota >= 6) {
+                    mensagem = "Boa avaliação!";
+                } else if (nota >= 4) {
+                    mensagem = "Avaliação mediana.";
+                } else {
+                    mensagem = "Avaliação negativa.";
+                }
+
+                // Opcional: mostrar a mensagem em algum elemento
+                document.getElementById('feedback-nota').textContent = mensagem;
+            }
+        });
+    });
+</script>
+{% endblock %}
+{% endblock %}

@@ -1,0 +1,26 @@
+INSTRUÇÕES PARA INICIAR O PROJETO
+
+1. Abra o CMD (Prompt de Comando) do Windows
+
+2. Navegue até a pasta do projeto:
+   cd C:\...
+
+3. Ative o ambiente virtual (se estiver usando um):
+   venv\Scripts\activate
+
+4. Inicie o servidor Django:
+   python manage.py runserver
+
+5. Após iniciar, você verá uma mensagem como:
+   Starting development server at http://127.0.0.1:8000/
+
+6. Acesse o site em seu navegador através de:
+   http://127.0.0.1:8000/
+
+Para parar o servidor:
+- Pressione Ctrl + C no CMD
+
+Observações:
+- Mantenha o CMD aberto enquanto estiver usando o site
+- Se precisar reiniciar o servidor, repita os passos 4 e 5
+- Em caso de erros, verifique se todas as dependências estão instaladas 

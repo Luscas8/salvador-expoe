@@ -1,0 +1,231 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Home - Salvador Expõe{% endblock %}
+
+{% block extra_css %}
+<style>
+    #map {
+        height: 400px;
+        width: 100%;
+        border-radius: 4px;
+        margin-bottom: 20px;
+    }
+    .location-info {
+        margin-top: 10px;
+        padding: 10px;
+        border-radius: 5px;
+        background-color: #fff3cd;
+        border: 1px solid #ffeeba;
+        color: #856404;
+        margin-bottom: 20px;
+    }
+    .location-success {
+        background-color: #d4edda;
+        border-color: #c3e6cb;
+        color: #155724;
+    }
+    .location-error {
+        background-color: #f8d7da;
+        border-color: #f5c6cb;
+        color: #721c24;
+    }
+    .avaliacao-card {
+        margin-bottom: 15px;
+    }
+    .star-rating {
+        color: #ffc107;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h4 class="card-title">Mapa de Avaliações</h4>
+                    <div class="location-info">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>Aviso:</strong> Para uma melhor experiência, recomendamos permitir o acesso à sua localização.
+                        Isso nos ajudará a:
+                        <ul class="mb-0 mt-2">
+                            <li>Mostrar avaliações de bairros próximos a você</li>
+                            <li>Centralizar o mapa na sua localização</li>
+                            <li>Sugerir bairros relevantes para avaliar</li>
+                        </ul>
+                    </div>
+                    <div id="locationStatus" style="display: none;" class="alert alert-info">
+                        Verificando sua localização...
+                    </div>
+                    <div id="map"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h4 class="card-title">Avaliar Bairro</h4>
+                    <form id="avaliacaoForm" method="post" action="{% url 'avaliar_bairro' %}">
+                        {% csrf_token %}
+                        {{ form.as_p }}
+                        <button type="submit" class="btn btn-primary">Enviar Avaliação</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-body">
+                    <h4 class="card-title">Avaliações Recentes</h4>
+                    <div id="avaliacoesRecentes">
+                        {% include 'core/includes/avaliacoes_recentes.html' with avaliacoes_recentes=avaliacoes_recentes %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://kit.fontawesome.com/your-font-awesome-kit.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Código que depende de jQuery e/ou Leaflet
+        // Inicialização do mapa (depende de Leaflet)
+        var map = L.map('map').setView([-12.9714, -38.5014], 12);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+        
+        // Adicionar o heatmap
+        var dados_heatmap = {{ dados_heatmap|safe }};
+        var heat = L.heatLayer(dados_heatmap, {
+            radius: 75,
+            blur: 50,
+            maxZoom: 16,
+            gradient: {
+                0.0: 'red',
+                0.2: 'orangered',
+                0.4: 'orange',
+                0.6: 'yellow',
+                0.8: 'lightblue',
+                1.0: 'blue'
+            }
+        }).addTo(map);
+        
+        // Tentar obter a localização do usuário
+        if ("geolocation" in navigator) {
+            document.getElementById('locationStatus').style.display = 'block';
+            
+            navigator.geolocation.getCurrentPosition(function(position) {
+                const lat = position.coords.latitude;
+                const lng = position.coords.longitude;
+                
+                // Centralizar o mapa na localização do usuário
+                map.setView([lat, lng], 14);
+                
+                // Adicionar marcador da localização do usuário
+                L.marker([lat, lng], {
+                    icon: L.divIcon({
+                        className: 'user-location',
+                        html: '<i class="fas fa-user-circle fa-2x" style="color: #007bff;"></i>'
+                    })
+                }).addTo(map)
+                .bindPopup('Sua localização')
+                .openPopup();
+                
+                document.getElementById('locationStatus').className = 'alert alert-success';
+                document.getElementById('locationStatus').innerHTML = '<i class="fas fa-check-circle"></i> Localização obtida com sucesso!';
+                
+                setTimeout(() => {
+                    document.getElementById('locationStatus').style.display = 'none';
+                }, 3000);
+            }, function(error) {
+                let mensagem = '';
+                switch(error.code) {
+                    case error.PERMISSION_DENIED:
+                        mensagem = "Acesso à localização não permitido";
+                        break;
+                    case error.POSITION_UNAVAILABLE:
+                        mensagem = "Localização indisponível";
+                        break;
+                    case error.TIMEOUT:
+                        mensagem = "Tempo esgotado ao obter localização";
+                        break;
+                    default:
+                        mensagem = "Erro ao obter localização";
+                }
+                document.getElementById('locationStatus').className = 'alert alert-warning';
+                document.getElementById('locationStatus').innerHTML = '<i class="fas fa-exclamation-triangle"></i> ' + mensagem;
+                
+                setTimeout(() => {
+                    document.getElementById('locationStatus').style.display = 'none';
+                }, 3000);
+            }, {
+                enableHighAccuracy: true,
+                timeout: 5000,
+                maximumAge: 0
+            });
+        }
+
+        // Inicializar Select2 (depende de jQuery)
+        // Verificar se jQuery está definido antes de usar $
+        if (typeof $ !== 'undefined') {
+            $('select[name="bairro"]').select2({
+                theme: 'bootstrap-5',
+                placeholder: 'Selecione um bairro ou digite',
+                allowClear: true,
+                width: '100%'
+            });
+
+             // AJAX para o formulário de avaliação (depende de jQuery)
+            $('#avaliacaoForm').on('submit', function(e) {
+                e.preventDefault();
+                
+                fetch(this.action, {
+                    method: 'POST',
+                    body: new FormData(this),
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Atualizar o heatmap
+                        heat.setLatLngs(data.dados_heatmap);
+                        
+                        // Atualizar avaliações recentes
+                        document.getElementById('avaliacoesRecentes').innerHTML = data.avaliacoes_html;
+                        
+                        // Atualizar o gráfico radar na página de classificação, se existir
+                        if (window.atualizarRadarChart) {
+                            window.atualizarRadarChart();
+                        }
+                        // Atualizar o ranking dos bairros na página de classificação, se existir
+                        if (window.atualizarRankingBairros) {
+                            window.atualizarRankingBairros();
+                        }
+                        
+                        // Mostrar mensagem de sucesso
+                        alert(data.message);
+                        
+                        // Limpar o formulário
+                        this.reset();
+                    }
+                })
+                .catch(error => {
+                    console.error('Erro:', error);
+                    alert('Erro ao enviar avaliação. Tente novamente.');
+                });
+            });
+
+        } else {
+            console.error("jQuery não está carregado. Select2 e formulário AJAX não inicializados.");
+        }
+    });
+</script>
+{% endblock %} 

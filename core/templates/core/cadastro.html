@@ -1,0 +1,211 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Cadastro - Salvador Expõe{% endblock %}
+
+{% block extra_css %}
+<style>
+    .location-info {
+        margin-top: 10px;
+        padding: 10px;
+        border-radius: 5px;
+        background-color: #fff3cd;
+        border: 1px solid #ffeeba;
+        color: #856404;
+        margin-bottom: 20px;
+    }
+    .location-success {
+        background-color: #d4edda;
+        border-color: #c3e6cb;
+        color: #155724;
+    }
+    .location-error {
+        background-color: #f8d7da;
+        border-color: #f5c6cb;
+        color: #721c24;
+    }
+    .hidden-input {
+        display: none;
+    }
+    #debug-info {
+        margin-top: 10px;
+        font-size: 12px;
+        color: #666;
+        background-color: #f8f9fa;
+        padding: 10px;
+        border-radius: 5px;
+    }
+    .btn-primary[disabled] {
+        cursor: not-allowed;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">Cadastro</h4>
+                </div>
+                <div class="card-body">
+                    <div class="location-info">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>Aviso:</strong> Para se cadastrar, é obrigatório permitir o acesso à sua localização.
+                        Isso nos ajudará a:
+                        <ul class="mb-0 mt-2">
+                            <li>Mostrar avaliações de bairros próximos a você</li>
+                            <li>Facilitar suas avaliações futuras</li>
+                            <li>Personalizar sua experiência no site</li>
+                        </ul>
+                    </div>
+
+                    <div id="locationStatus" class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        Por favor, permita o acesso à sua localização para continuar o cadastro.
+                    </div>
+
+                    <form method="post" id="cadastroForm">
+                        {% csrf_token %}
+                        {{ form.as_p }}
+                        <input type="hidden" name="latitude" id="latitude" value="">
+                        <input type="hidden" name="longitude" id="longitude" value="">
+                        <button type="submit" class="btn btn-primary" id="submitBtn" disabled>
+                            Cadastrar
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Primeiro carregamos o jQuery -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<!-- Depois o Bootstrap -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- Finalmente nosso código -->
+<script>
+// Função para verificar se todos os scripts necessários foram carregados
+function checkDependencies() {
+    if (typeof jQuery === 'undefined' || typeof bootstrap === 'undefined') {
+        console.log('Aguardando dependências...');
+        setTimeout(checkDependencies, 100);
+        return;
+    }
+    
+    console.log('Todas as dependências carregadas, iniciando setup do formulário...');
+    setupForm();
+}
+
+function setupForm() {
+    try {
+        console.log('Iniciando setup do formulário...');
+        
+        // Obter elementos do DOM
+        const elements = {
+            form: document.getElementById('cadastroForm'),
+            locationStatus: document.getElementById('locationStatus'),
+            latitudeInput: document.getElementById('latitude'),
+            longitudeInput: document.getElementById('longitude'),
+            submitBtn: document.getElementById('submitBtn')
+        };
+
+        // Verificar se todos os elementos foram encontrados
+        const missingElements = Object.entries(elements)
+            .filter(([key, value]) => !value)
+            .map(([key]) => key);
+
+        if (missingElements.length > 0) {
+            console.error('Elementos não encontrados:', missingElements);
+            return;
+        }
+
+        console.log('Todos os elementos encontrados com sucesso');
+
+        // Configurar o botão de submit
+        elements.submitBtn.disabled = true;
+
+        // Configurar o status inicial
+        elements.locationStatus.className = 'alert alert-info';
+        elements.locationStatus.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Inicializando...';
+
+        // Verificar suporte à geolocalização
+        if (!navigator.geolocation) {
+            elements.locationStatus.className = 'alert alert-danger';
+            elements.locationStatus.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Seu navegador não suporta geolocalização.';
+            return;
+        }
+
+        // Solicitar localização
+        console.log('Solicitando permissão de localização...');
+        navigator.geolocation.getCurrentPosition(
+            // Sucesso
+            function(position) {
+                console.log('Localização obtida com sucesso');
+                elements.latitudeInput.value = position.coords.latitude;
+                elements.longitudeInput.value = position.coords.longitude;
+                
+                elements.locationStatus.className = 'alert alert-success';
+                elements.locationStatus.innerHTML = '<i class="fas fa-check-circle"></i> Localização obtida com sucesso!';
+                elements.submitBtn.disabled = false;
+            },
+            // Erro
+            function(error) {
+                console.error('Erro de geolocalização:', error);
+                let mensagem = '';
+                
+                switch(error.code) {
+                    case error.PERMISSION_DENIED:
+                        mensagem = "Acesso à localização negado. Por favor, permita o acesso e recarregue a página.";
+                        break;
+                    case error.POSITION_UNAVAILABLE:
+                        mensagem = "Localização indisponível. Verifique se o GPS está ativado.";
+                        break;
+                    case error.TIMEOUT:
+                        mensagem = "Tempo esgotado. Tente novamente.";
+                        break;
+                    default:
+                        mensagem = "Erro desconhecido. Tente novamente.";
+                }
+                
+                elements.locationStatus.className = 'alert alert-danger';
+                elements.locationStatus.innerHTML = '<i class="fas fa-exclamation-triangle"></i> ' + mensagem;
+            },
+            // Opções
+            {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 0
+            }
+        );
+
+        // Configurar validação do formulário
+        if (elements.form) {
+            elements.form.onsubmit = function(e) {
+                if (!elements.latitudeInput.value || !elements.longitudeInput.value) {
+                    e.preventDefault();
+                    elements.locationStatus.className = 'alert alert-danger';
+                    elements.locationStatus.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Localização necessária para cadastro.';
+                    return false;
+                }
+                return true;
+            };
+        }
+    } catch (error) {
+        console.error('Erro durante o setup:', error);
+    }
+}
+
+// Iniciar quando a página estiver completamente carregada
+window.addEventListener('load', function() {
+    console.log('Página carregada, verificando dependências...');
+    checkDependencies();
+});
+</script>
+{% endblock %} 

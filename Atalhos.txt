@@ -1,0 +1,39 @@
+python manage.py runserver - para iniciar o host admin senha admin123
+
+python gerar_mapa_calor.py - para iniciar o mapa de calor
+
+python adicionar_coordenadas.py - executar o script e atualizar as coordenadas dos bairros
+
+
+python manage.py makemigrations
+python manage.py migrate - Fazer e aplicar as migrações
+
+pip install geopy - instalar a biblioteca geopy
+
+start mapa_calor_salvador.html - para iniciar automaticamente no navegaror
+
+python manage.py inspectdb -Para verificar a estrutura do banco de dados
+
+python manage.py showmigrations - Para verificar as migrações pendentes
+
+pylint core/ - Para fazer uma análise de código (usando pylint)
+
+coverage run manage.py test 
+coverage report - Para verificar a cobertura de testes:
+
+python manage.py shell_plus --print-sql - Para otimizar as consultas ao banco de dados
+
+python manage.py show_urls - Para verificar as rotas disponíveis
+
+python -m cProfile manage.py runserver - Para fazer uma análise de performance
+
+pip list --outdated - Para verificar dependências desatualizadas:
+
+python manage.py clearsessions
+python manage.py clear_cache - Para fazer uma limpeza de cache e arquivos temporários:
+
+python manage.py dbshell - Para verificar o status do banco de dados:
+
+
+
+

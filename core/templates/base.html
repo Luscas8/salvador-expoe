@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Avaliação de Bairros{% endblock %}</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"/>
+    <!-- FontAwesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <style>
+        :root {
+            --max-width: 1920px; /* Resolução máxima padrão */
+        }
+
+        body {
+            background-color: #f8f9fa;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .navbar {
+            background-color: #343a40;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .navbar-brand {
+            color: white !important;
+            font-weight: bold;
+        }
+
+        .nav-link {
+            color: rgba(255, 255, 255, 0.8) !important;
+        }
+
+        .nav-link:hover {
+            color: white !important;
+        }
+
+        .main-container {
+            width: 100%;
+            max-width: var(--max-width);
+            margin: 0 auto;
+            padding: 20px;
+            flex: 1;
+        }
+
+        .card {
+            height: 100%;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        #map {
+            height: calc(100vh - 300px);
+            min-height: 400px;
+            width: 100%;
+            border-radius: 4px;
+        }
+
+        .table-responsive {
+            max-height: calc(100vh - 400px);
+            min-height: 300px;
+            overflow-y: auto;
+        }
+
+        @media (max-width: 768px) {
+            .main-container {
+                padding: 10px;
+            }
+
+            #map {
+                height: 350px;
+            }
+
+            .table-responsive {
+                max-height: 400px;
+            }
+        }
+
+        @media (min-width: 1921px) {
+            .main-container {
+                max-width: 80%;
+            }
+        }
+
+        /* Ajustes para telas muito grandes */
+        @media (min-width: 2560px) {
+            .main-container {
+                max-width: 70%;
+            }
+
+            .card {
+                font-size: 1.2rem;
+            }
+
+            .btn {
+                padding: 0.75rem 1.5rem;
+                font-size: 1.1rem;
+            }
+        }
+
+        /* Ajustes para telas pequenas */
+        @media (max-width: 576px) {
+            .main-container {
+                padding: 5px;
+            }
+
+            .card {
+                margin-bottom: 10px;
+            }
+
+            #map {
+                height: 300px;
+            }
+        }
+
+        /* Melhorias de acessibilidade */
+        .btn:focus, .nav-link:focus {
+            box-shadow: 0 0 0 0.2rem rgba(0,123,255,0.25);
+            outline: none;
+        }
+
+        /* Melhorias visuais */
+        .card {
+            transition: transform 0.2s;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+        }
+
+        /* Scrollbar personalizada */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark mb-4">
+        <div class="container">
+            <a class="navbar-brand" href="{% url 'home' %}">Salvador Expõe</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'home' %}">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'Mapa_dos_Bairros' %}">Mapa dos Bairros</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'minhas_avaliacoes' %}">Minhas Avaliações</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'logout' %}">Sair</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="main-container">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        {% block content %}
+        {% endblock %}
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- Leaflet Heatmap JS -->
+    <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+    
+    <script>
+        // Detectar resolução do monitor e ajustar variáveis CSS
+        function adjustForScreenSize() {
+            const width = window.innerWidth;
+            const root = document.documentElement;
+            
+            if (width >= 2560) {
+                root.style.setProperty('--max-width', '2000px');
+            } else if (width >= 1920) {
+                root.style.setProperty('--max-width', '1800px');
+            } else if (width >= 1440) {
+                root.style.setProperty('--max-width', '1360px');
+            } else {
+                root.style.setProperty('--max-width', '1140px');
+            }
+        }
+
+        // Ajustar no carregamento e quando a janela for redimensionada
+        window.addEventListener('load', adjustForScreenSize);
+        window.addEventListener('resize', adjustForScreenSize);
+    </script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html> 
