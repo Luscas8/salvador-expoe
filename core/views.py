@@ -176,8 +176,11 @@ def avaliar_bairro(request):
             })
     else:
         form = AvaliacaoForm()
-
-    return render(request, 'core/home.html', {'form': form})
+        avaliacoes_recentes = Avaliacao.objects.select_related('usuario', 'bairro').order_by('-data_criacao')[:10]
+        return render(request, 'core/home.html', {
+            'form': form,
+            'avaliacoes_recentes': avaliacoes_recentes
+        })
 
 
 @login_required
