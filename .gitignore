@@ -46,4 +46,16 @@ Desktop.ini
 # Mac
 .DS_Store
 .AppleDouble
-.LSOverride 
+.LSOverride
+
+# PythonAnywhere
+.pythonanywhere/
+.pythonanywhere.com/
+
+# Arquivos de ambiente
+.env
+.env.local
+.env.*.local
+
+# Arquivos de configuração local
+local_settings.py 
