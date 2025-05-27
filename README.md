@@ -58,10 +58,6 @@ python manage.py runserver
 - Acesse http://localhost:8000 para ver o site
 - Acesse http://localhost:8000/admin para o painel administrativo
 
-## Licença
-
-Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para mais detalhes.
-
 ## Contato
 
 Lucas Brendo - [@Luscas8](https://github.com/Luscas8) 
