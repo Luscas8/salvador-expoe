@@ -58,18 +58,6 @@ python manage.py runserver
 - Acesse http://localhost:8000 para ver o site
 - Acesse http://localhost:8000/admin para o painel administrativo
 
-## Contribuição
-
-1. Faça um Fork do projeto
-2. Crie uma Branch para sua Feature (`git checkout -b feature/AmazingFeature`)
-3. Commit suas mudanças (`git commit -m 'Add some AmazingFeature'`)
-4. Push para a Branch (`git push origin feature/AmazingFeature`)
-5. Abra um Pull Request
-
-## Licença
-
-Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para mais detalhes.
-
 ## Contato
 
-Lucas Breno - [@Luscas8](https://github.com/Luscas8) 
+Lucas Brendo - [@Luscas8](https://github.com/Luscas8) 
