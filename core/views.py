@@ -14,6 +14,8 @@ import folium
 from folium.plugins import HeatMap
 import json
 from django.views.decorators.http import require_GET
+import os
+from pathlib import Path # Certifique-se que Path está importado
 
 from .models import Bairro, Avaliacao
 from .forms.auth_forms import CadastroForm
