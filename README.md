@@ -72,4 +72,4 @@ Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para ma
 
 ## Contato
 
-Lucas Breno - [@Luscas8](https://github.com/Luscas8) 
+Lucas Brendo - [@Luscas8](https://github.com/Luscas8) 
