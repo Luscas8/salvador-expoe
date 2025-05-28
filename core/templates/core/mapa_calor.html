@@ -120,6 +120,14 @@
         width: 100%;
         margin: 10px 0;
     }
+    .error-message {
+        color: red;
+        padding: 10px;
+        margin: 10px 0;
+        border: 1px solid red;
+        border-radius: 4px;
+        background-color: #fff;
+    }
 </style>
 {% endblock %}
 
@@ -225,148 +233,101 @@
 <script src="https://cdn.jsdelivr.net/npm/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
 
 <script>
-    // Inicializar o mapa
-    var map = L.map('map').setView({{ centro_mapa|safe }}, 12);
-    
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap contributors'
-    }).addTo(map);
-
-    // Configurar o mapa de calor
-    var heatData = {{ dados_heatmap|safe }};
-    var heatLayer = L.heatLayer(heatData, {
-        radius: 40,
-        blur: 35,
-        maxOpacity: 0.7,
-        minOpacity: 0.2,
-        gradient: {
-            0.0: '#ff0000',  // Vermelho para notas 1-3
-            0.3: '#ff7f00',  // Laranja para notas 4-5
-            0.5: '#ffff00',  // Amarelo para notas 6-7
-            0.7: '#00ff00',  // Verde para notas 8-9
-            1.0: '#0000ff'   // Azul para nota 10
-        }
-    }).addTo(map);
-    
-    // Array para armazenar os marcadores
-    var marcadores = [];
-
-    // Função para atualizar dados
-    function atualizarDados() {
-        fetch('/mapa-calor-dados/')
-            .then(function(response) {
-                return response.json();
-            })
-            .then(function(data) {
-                console.log("Dados atualizados:", data);
-                
-                // Atualizar heatmap
-                if (data.data && data.data.length > 0) {
-                    heatLayer.setLatLngs(data.data);
-                }
-                
-                // Remover marcadores antigos
-                marcadores.forEach(function(marcador) {
-                    map.removeLayer(marcador);
-                });
-                marcadores = [];
-                
-                // Adicionar novos marcadores
-                if (data.marcadores && data.marcadores.length > 0) {
-                    data.marcadores.forEach(function(m) {
-                        var marcador = L.circleMarker([m.lat, m.lng], {
-                            radius: 8,
-                            color: m.cor,
-                            fill: true,
-                            fillColor: m.cor,
-                            fillOpacity: 0.7,
-                            weight: 3
-                        });
-                        
-                        marcador.bindPopup(
-                            '<div style="font-family: Arial; font-size: 12px;">' +
-                            '<b>' + m.nome + '</b><br>' +
-                            'Nota média: ' + m.media.toFixed(1) +
-                            '</div>'
-                        );
-                        
-                        marcador.addTo(map);
-                        marcadores.push(marcador);
-                    });
-                }
-                
-                // Atualizar estatísticas
-                if (data.stats) {
-                    document.getElementById('total-bairros').textContent = data.stats.total_bairros;
-                    document.getElementById('total-avaliacoes').textContent = data.stats.total_avaliacoes;
-                    document.getElementById('media-geral').textContent = data.stats.media_geral.toFixed(1);
-                    document.getElementById('melhor-bairro-nota').textContent = data.stats.melhor_nota.toFixed(1);
-                    
-                    // Atualizar top 5 bairros
-                    var topBairrosList = document.getElementById('top-bairros-list');
-                    if (data.stats.top_bairros) {
-                        topBairrosList.innerHTML = data.stats.top_bairros.map(function(bairro) {
-                            return '<div class="d-flex justify-content-between align-items-center mb-2">' +
-                                '<span>' + bairro.nome + '</span>' +
-                                '<span class="badge bg-primary">' + bairro.media.toFixed(1) + '</span>' +
-                                '</div>';
-                        }).join('');
-                    }
-                }
-            })
-            .catch(function(error) {
-                console.error('Erro ao atualizar dados:', error);
-            });
+    // Função para mostrar erros
+    function showError(message) {
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'error-message';
+        errorDiv.textContent = message;
+        document.querySelector('.map-container').prepend(errorDiv);
+        console.error(message);
     }
 
-    // Atualizar dados a cada 5 segundos
-    setInterval(atualizarDados, 5000);
-
-    // Controles do mapa de calor
-    const intensitySlider = document.getElementById('intensity-slider');
-    const radiusSlider = document.getElementById('radius-slider');
-    const blurSlider = document.getElementById('blur-slider');
-    const toggleHeatmap = document.getElementById('toggle-heatmap');
-
-    function updateHeatmap() {
-        if (heatLayer) {
-            map.removeLayer(heatLayer);
+    // Função para verificar se as bibliotecas foram carregadas
+    function checkLibraries() {
+        if (typeof L === 'undefined') {
+            showError('Erro: Biblioteca Leaflet não carregada');
+            return false;
         }
-        
-        // Usar os dados atualizados do heatmap
-        var currentData = heatLayer.getLatLngs();
-        
-        heatLayer = L.heatLayer(currentData, {
-            radius: 40,
-            blur: 35,
-            maxOpacity: parseInt(intensitySlider.value) / 100,
-            minOpacity: (parseInt(intensitySlider.value) / 100) * 0.6,
-            gradient: {
-                0.0: '#ff0000',  // Vermelho para notas 1-3
-                0.3: '#ff7f00',  // Laranja para notas 4-5
-                0.5: '#ffff00',  // Amarelo para notas 6-7
-                0.7: '#00ff00',  // Verde para notas 8-9
-                1.0: '#0000ff'   // Azul para nota 10
+        if (typeof L.heatLayer === 'undefined') {
+            showError('Erro: Plugin Leaflet.heat não carregado');
+            return false;
+        }
+        return true;
+    }
+
+    // Função para inicializar o mapa
+    function initMap() {
+        try {
+            console.log("Inicializando o mapa...");
+            
+            if (!checkLibraries()) {
+                return;
             }
-        });
-        
-        if (toggleHeatmap.checked) {
-            heatLayer.addTo(map);
+
+            // Inicializar mapa
+            const map = L.map('map').setView({{ centro_mapa|safe }}, 12);
+            
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(map);
+
+            // Configurar o mapa de calor
+            const heatData = {{ dados_heatmap|safe }};
+            console.log("Dados do heatmap:", heatData);
+
+            if (!Array.isArray(heatData) || heatData.length === 0) {
+                showError('Nenhum dado disponível para o mapa de calor');
+                return;
+            }
+
+            const heatLayer = L.heatLayer(heatData, {
+                radius: 40,
+                blur: 35,
+                maxOpacity: 0.7,
+                minOpacity: 0.2,
+                gradient: {
+                    0.0: '#ff0000',  // Vermelho para notas 1-3
+                    0.3: '#ff7f00',  // Laranja para notas 4-5
+                    0.5: '#ffff00',  // Amarelo para notas 6-7
+                    0.7: '#00ff00',  // Verde para notas 8-9
+                    1.0: '#0000ff'   // Azul para nota 10
+                }
+            }).addTo(map);
+
+            // Configurar controles
+            const intensitySlider = document.getElementById('intensity-slider');
+            const radiusSlider = document.getElementById('radius-slider');
+            const blurSlider = document.getElementById('blur-slider');
+            const toggleHeatmap = document.getElementById('toggle-heatmap');
+
+            intensitySlider.addEventListener('input', function() {
+                heatLayer.setOptions({ maxOpacity: this.value / 100 });
+            });
+
+            radiusSlider.addEventListener('input', function() {
+                heatLayer.setOptions({ radius: this.value });
+            });
+
+            blurSlider.addEventListener('input', function() {
+                heatLayer.setOptions({ blur: this.value });
+            });
+
+            toggleHeatmap.addEventListener('change', function() {
+                if (this.checked) {
+                    map.addLayer(heatLayer);
+                } else {
+                    map.removeLayer(heatLayer);
+                }
+            });
+
+            console.log("Mapa inicializado com sucesso!");
+        } catch (error) {
+            showError('Erro ao inicializar o mapa: ' + error.message);
+            console.error(error);
         }
     }
 
-    intensitySlider.addEventListener('input', updateHeatmap);
-    radiusSlider.addEventListener('input', updateHeatmap);
-    blurSlider.addEventListener('input', updateHeatmap);
-    toggleHeatmap.addEventListener('change', function() {
-        if (this.checked) {
-            heatLayer.addTo(map);
-        } else {
-            map.removeLayer(heatLayer);
-        }
-    });
-
-    // Carregar dados iniciais
-    atualizarDados();
+    // Inicializar o mapa quando a página carregar
+    document.addEventListener('DOMContentLoaded', initMap);
 </script>
 {% endblock %} 
