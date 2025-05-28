@@ -1,0 +1,72 @@
+from django.core.management.base import BaseCommand
+from django.db import transaction
+from django.contrib.auth.models import User
+from core.models import Bairro, Avaliacao
+
+class Command(BaseCommand):
+    help = 'Atualiza todos os dados do sistema (limpa bairros, popula dados e adiciona avaliações)'
+
+    def handle(self, *args, **options):
+        self.stdout.write('Iniciando atualização dos dados...')
+        
+        # 1. Limpar bairros duplicados
+        self.stdout.write('Limpando bairros duplicados...')
+        bairros_reais = [
+            'Barra', 'Pituba', 'Rio Vermelho', 'Ondina', 'Graça',
+            'Campo Grande', 'Centro', 'Comércio', 'Pelourinho',
+            'Engenho Velho', 'Federação', 'Vitoria', 'Canela',
+            'Nazaré', 'Dois de Julho', 'Corredor da Vitoria'
+        ]
+        
+        with transaction.atomic():
+            Bairro.objects.exclude(nome__in=bairros_reais).delete()
+            self.stdout.write(f'Bairros restantes: {Bairro.objects.count()}')
+        
+        # 2. Criar usuários de teste
+        self.stdout.write('Criando usuários de teste...')
+        usuarios = [
+            {'username': 'usuario1', 'email': 'usuario1@teste.com', 'password': 'teste123'},
+            {'username': 'usuario2', 'email': 'usuario2@teste.com', 'password': 'teste123'},
+            {'username': 'usuario3', 'email': 'usuario3@teste.com', 'password': 'teste123'},
+            {'username': 'usuario4', 'email': 'usuario4@teste.com', 'password': 'teste123'},
+            {'username': 'usuario5', 'email': 'usuario5@teste.com', 'password': 'teste123'},
+        ]
+        
+        users = []
+        for user_data in usuarios:
+            user, created = User.objects.get_or_create(
+                username=user_data['username'],
+                email=user_data['email']
+            )
+            if created:
+                user.set_password(user_data['password'])
+                user.save()
+            users.append(user)
+        
+        # 3. Adicionar avaliações
+        self.stdout.write('Adicionando avaliações...')
+        avaliacoes = [
+            {'nota': 9, 'comentario': 'Ótimo lugar para morar!'},
+            {'nota': 8, 'comentario': 'Boa localização e infraestrutura'},
+            {'nota': 7, 'comentario': 'Bairro tranquilo e agradável'},
+            {'nota': 10, 'comentario': 'Melhor bairro de Salvador!'},
+            {'nota': 6, 'comentario': 'Regular, precisa melhorar'},
+        ]
+        
+        with transaction.atomic():
+            for user in users:
+                for bairro in Bairro.objects.all():
+                    # Verificar se já existe avaliação deste usuário para este bairro
+                    if not Avaliacao.objects.filter(usuario=user, bairro=bairro).exists():
+                        avaliacao = avaliacoes[len(users) % len(avaliacoes)]
+                        Avaliacao.objects.create(
+                            usuario=user,
+                            bairro=bairro,
+                            nota=avaliacao['nota'],
+                            comentario=avaliacao['comentario']
+                        )
+                        self.stdout.write(f"Adicionada avaliação para {bairro.nome} por {user.username}")
+        
+        self.stdout.write(self.style.SUCCESS('\nDados atualizados com sucesso!'))
+        self.stdout.write(f"Total de bairros: {Bairro.objects.count()}")
+        self.stdout.write(f"Total de avaliações: {Avaliacao.objects.count()}") 
