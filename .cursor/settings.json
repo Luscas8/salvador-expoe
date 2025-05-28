@@ -1,0 +1,18 @@
+{
+    "git": {
+        "autoCommit": true,
+        "autoPush": true,
+        "commitMessage": "Atualização automática: {timestamp}",
+        "commitOnSave": true
+    },
+    "editor": {
+        "formatOnSave": true,
+        "formatOnPaste": true
+    },
+    "python": {
+        "formatting": {
+            "provider": "black",
+            "formatOnSave": true
+        }
+    }
+} 
