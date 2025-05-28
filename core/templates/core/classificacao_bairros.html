@@ -441,7 +441,7 @@
 {% endblock %}
 
 {% block content %}
-<div class="container py-5">
+<div class="container mt-4">
     <h1 class="mb-4">Classificação dos Bairros</h1>
 
     <!-- Filtros -->
@@ -464,6 +464,26 @@
         </div>
     </div>
 
+    <!-- Estatísticas -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Total de Bairros Avaliados</h5>
+                    <p class="card-text display-4">{{ total_bairros }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Média Geral</h5>
+                    <p class="card-text display-4">{{ media_geral|floatformat:1 }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Tabela de Classificação -->
     <div class="card">
         <div class="card-body">
@@ -475,7 +495,6 @@
                             <th>Bairro</th>
                             <th>Nota Média</th>
                             <th>Total de Avaliações</th>
-                            <th>Detalhes</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -489,15 +508,10 @@
                                 </span>
                             </td>
                             <td>{{ bairro.total_avaliacoes }}</td>
-                            <td>
-                                <a href="{% url 'dados_radar' bairro.id %}" class="btn btn-sm btn-outline-primary">
-                                    Ver Detalhes
-                                </a>
-                            </td>
                         </tr>
                         {% empty %}
                         <tr>
-                            <td colspan="5" class="text-center">Nenhum bairro encontrado.</td>
+                            <td colspan="4" class="text-center">Nenhum bairro encontrado.</td>
                         </tr>
                         {% endfor %}
                     </tbody>
