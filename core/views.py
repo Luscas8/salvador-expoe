@@ -20,6 +20,7 @@ from pathlib import Path # Certifique-se que Path está importado
 from .models import Bairro, Avaliacao
 from .forms.auth_forms import CadastroForm
 from .forms.bairro_forms import AvaliacaoForm
+from .forms import ClassificacaoBairrosForm
 
 
 class CustomLoginView(LoginView):
@@ -30,7 +31,7 @@ class CustomLoginView(LoginView):
         return reverse_lazy('home')
     
     def get(self, *args, **kwargs):
-        if self.request.user.is_authenticated:
+        if self.request.user.is_validated:
             return redirect('home')
         return super().get(*args, **kwargs)
 
@@ -196,11 +197,13 @@ def is_float(value):
     try:
         float(value)
         return True
-    except (TypeError, ValueError):
+    except (ValueError, TypeError):
         return False
 
 
 def classificacao_bairros(request):
+    form = ClassificacaoBairrosForm(request.GET)
+    
     # Obter dados dos bairros e suas avaliações médias
     bairros = Bairro.objects.annotate(
         media=Avg('avaliacoes__nota'),
@@ -209,7 +212,23 @@ def classificacao_bairros(request):
         media__isnull=False,
         latitude__isnull=False,
         longitude__isnull=False
-    ).order_by('-media')
+    )
+
+    # Aplicar filtros do formulário
+    if form.is_valid():
+        bairro = form.cleaned_data.get('bairro')
+        criterio = form.cleaned_data.get('criterio')
+        ordem = form.cleaned_data.get('ordem')
+
+        if bairro:
+            bairros = bairros.filter(id=bairro.id)
+
+        if criterio == 'media':
+            bairros = bairros.order_by('-media' if ordem == 'desc' else 'media')
+        elif criterio == 'avaliacoes':
+            bairros = bairros.order_by('-total_avaliacoes' if ordem == 'desc' else 'total_avaliacoes')
+        else:
+            bairros = bairros.order_by('-media')  # Ordenação padrão
 
     # Filtrar bairros com latitude/longitude realmente válidas
     bairros = [
@@ -221,80 +240,9 @@ def classificacao_bairros(request):
     # Calcular média geral
     media_geral = Avaliacao.objects.aggregate(Avg('nota'))['nota__avg'] or 0
 
-    # Criar o mapa
-    mapa = folium.Map(location=[-12.9714, -38.5014], zoom_start=12)
-    
-    # Preparar dados para o heatmap
-    dados_heatmap = []
-    for bairro in bairros:
-        if bairro.latitude and bairro.longitude and bairro.media:
-            # Nova lógica de normalização
-            if bairro.media <= 3:
-                nota_normalizada = 0.0  # Vermelho para notas muito baixas (1-3)
-            elif bairro.media <= 5:
-                nota_normalizada = 0.3  # Laranja para notas baixas (4-5)
-            elif bairro.media <= 7:
-                nota_normalizada = 0.5  # Amarelo para notas médias (6-7)
-            elif bairro.media <= 9:
-                nota_normalizada = 0.7  # Verde para notas boas (8-9)
-            else:
-                nota_normalizada = 1.0  # Azul para notas excelentes (10)
-                
-            dados_heatmap.append([
-                float(bairro.latitude),
-                float(bairro.longitude),
-                nota_normalizada
-            ])
-
-    # Adicionar heatmap ao mapa
-    HeatMap(dados_heatmap,
-        gradient={
-            0.0: '#ff0000',  # Vermelho para notas muito baixas (1-3)
-            0.3: '#ff7f00',  # Laranja para notas baixas (4-5)
-            0.5: '#ffff00',  # Amarelo para notas médias (6-7)
-            0.7: '#00ff00',  # Verde para notas boas (8-9)
-            1.0: '#0000ff'   # Azul para notas excelentes (10)
-        },
-        min_opacity=0.4,
-        max_opacity=0.7,
-        radius=15,
-        blur=10
-    ).add_to(mapa)
-
-    # Adicionar marcadores
-    for bairro in bairros:
-        if bairro.latitude and bairro.longitude and bairro.media:
-            # Definir cor baseada na nota
-            if bairro.media <= 4:
-                cor = 'red'
-            elif bairro.media <= 6:
-                cor = 'orange'
-            elif bairro.media <= 8:
-                cor = 'blue'
-            else:
-                cor = 'green'
-
-            # Criar marcador
-            folium.CircleMarker(
-                location=[bairro.latitude, bairro.longitude],
-                radius=5 + (bairro.media * 0.5),
-                color=cor,
-                fill=True,
-                fill_color=cor,
-                fill_opacity=0.7,
-                popup=f'<div style="font-family: Arial; font-size: 12px;">'
-                      f'<b>{bairro.nome}</b><br>'
-                      f'Nota média: {bairro.media:.1f}<br>'
-                      f'Total de avaliações: {bairro.total_avaliacoes}'
-                      f'</div>'
-            ).add_to(mapa)
-
-    # Converter o mapa para HTML
-    # mapa_html = mapa._repr_html_()  // Não precisa mais do HTML do folium
-
     context = {
-        'dados_heatmap': json.dumps(dados_heatmap),
-        'bairros_classificados': bairros,
+        'form': form,
+        'bairros': bairros,
         'total_bairros': len(bairros),
         'media_geral': media_geral
     }
