@@ -31,7 +31,7 @@ class CustomLoginView(LoginView):
         return reverse_lazy('home')
     
     def get(self, *args, **kwargs):
-        if self.request.user.is_validated:
+        if self.request.user.is_authenticated:
             return redirect('home')
         return super().get(*args, **kwargs)
 
