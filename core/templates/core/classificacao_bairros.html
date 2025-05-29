@@ -437,6 +437,32 @@
         color: #6c757d;
         margin-bottom: 10px;
     }
+    .legend-container {
+        padding: 20px;
+        background: #f8f9fa;
+        border-radius: 8px;
+    }
+    .legend-item {
+        display: flex;
+        align-items: center;
+        margin-bottom: 12px;
+        font-size: 0.95rem;
+    }
+    .legend-color {
+        width: 16px;
+        height: 16px;
+        border-radius: 4px;
+        margin-right: 8px;
+    }
+    .legend-text {
+        flex: 1;
+        color: #495057;
+    }
+    .legend-count {
+        font-weight: 600;
+        color: #212529;
+        margin-left: 8px;
+    }
 </style>
 {% endblock %}
 
@@ -479,6 +505,47 @@
                 <div class="card-body">
                     <h5 class="card-title">Média Geral</h5>
                     <p class="card-text display-4">{{ media_geral|floatformat:1 }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gráfico de Pizza -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <h5 class="card-title">Distribuição das Avaliações</h5>
+            <div class="row">
+                <div class="col-md-8">
+                    <canvas id="pizzaChart"></canvas>
+                </div>
+                <div class="col-md-4">
+                    <div class="legend-container">
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: #28a745;"></div>
+                            <span class="legend-text">Excelente (9-10)</span>
+                            <span class="legend-count">{{ faixas.Excelente__9_10_ }}</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: #17a2b8;"></div>
+                            <span class="legend-text">Muito Bom (7-8)</span>
+                            <span class="legend-count">{{ faixas.Muito_Bom__7_8_ }}</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: #ffc107;"></div>
+                            <span class="legend-text">Bom (5-6)</span>
+                            <span class="legend-count">{{ faixas.Bom__5_6_ }}</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: #fd7e14;"></div>
+                            <span class="legend-text">Regular (3-4)</span>
+                            <span class="legend-count">{{ faixas.Regular__3_4_ }}</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: #dc3545;"></div>
+                            <span class="legend-text">Ruim (1-2)</span>
+                            <span class="legend-count">{{ faixas.Ruim__1_2_ }}</span>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

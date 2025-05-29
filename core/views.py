@@ -240,11 +240,34 @@ def classificacao_bairros(request):
     # Calcular média geral
     media_geral = Avaliacao.objects.aggregate(Avg('nota'))['nota__avg'] or 0
 
+    # Preparar dados para o gráfico de pizza
+    faixas = {
+        'Excelente (9-10)': 0,
+        'Muito Bom (7-8)': 0,
+        'Bom (5-6)': 0,
+        'Regular (3-4)': 0,
+        'Ruim (1-2)': 0
+    }
+
+    for bairro in bairros:
+        media = float(bairro.media)
+        if media >= 9:
+            faixas['Excelente (9-10)'] += 1
+        elif media >= 7:
+            faixas['Muito Bom (7-8)'] += 1
+        elif media >= 5:
+            faixas['Bom (5-6)'] += 1
+        elif media >= 3:
+            faixas['Regular (3-4)'] += 1
+        else:
+            faixas['Ruim (1-2)'] += 1
+
     context = {
         'form': form,
         'bairros': bairros,
         'total_bairros': len(bairros),
-        'media_geral': media_geral
+        'media_geral': media_geral,
+        'faixas': faixas
     }
 
     return render(request, 'core/classificacao_bairros.html', context)
