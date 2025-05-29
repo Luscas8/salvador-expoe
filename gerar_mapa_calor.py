@@ -54,10 +54,10 @@ def gerar_mapa_calor():
     HeatMap(
         dados_heatmap,
         gradient=gradient,
-        min_opacity=0.6,      # Aumentado para melhor visibilidade
-        max_opacity=0.9,      # Aumentado para melhor visibilidade
-        radius=75,            # TESTE: valor intermediário
-        blur=50               # TESTE: muito mais suave
+        min_opacity=0.6,
+        max_opacity=0.9,
+        radius=35,            # Reduzido para melhor precisão
+        blur=25              # Reduzido para menos borrão
     ).add_to(mapa)
 
     # Adicionar marcadores para cada bairro
