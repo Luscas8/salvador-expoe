@@ -16,9 +16,11 @@ Um projeto Django para avaliação e visualização de bairros de Salvador atrav
 - Django 4.2
 - Folium (para mapas)
 - Bootstrap 5
-- SQLite (desenvolvimento) / MySQL (produção)
+- SQLite (desenvolvimento e produção)
+- Gunicorn (servidor WSGI)
+- Nginx (servidor web)
 
-## Instalação
+## Instalação para Desenvolvimento
 
 1. Clone o repositório:
 ```bash
@@ -48,15 +50,72 @@ python manage.py migrate
 python manage.py createsuperuser
 ```
 
-6. Inicie o servidor:
+6. Inicie o servidor de desenvolvimento:
 ```bash
 python manage.py runserver
 ```
 
-## Uso
+## Deploy em Produção
 
-- Acesse http://localhost:8000 para ver o site
-- Acesse http://localhost:8000/admin para o painel administrativo
+1. Configure as variáveis de ambiente:
+```bash
+cp .env.example .env
+# Edite o arquivo .env com suas configurações
+```
+
+2. Instale as dependências de produção:
+```bash
+pip install -r requirements.txt
+```
+
+3. Configure o Nginx:
+```bash
+# Copie o arquivo nginx.conf para /etc/nginx/sites-available/
+sudo cp nginx.conf /etc/nginx/sites-available/salvador_expoe
+# Crie um link simbólico
+sudo ln -s /etc/nginx/sites-available/salvador_expoe /etc/nginx/sites-enabled/
+# Teste a configuração
+sudo nginx -t
+# Reinicie o Nginx
+sudo systemctl restart nginx
+```
+
+4. Configure o SSL (usando Certbot):
+```bash
+sudo certbot --nginx -d seu-dominio.com
+```
+
+5. Inicie a aplicação:
+```bash
+chmod +x start_prod.sh
+./start_prod.sh
+```
+
+6. Configure o supervisor para manter a aplicação rodando:
+```bash
+sudo apt-get install supervisor
+sudo cp salvador_expoe.conf /etc/supervisor/conf.d/
+sudo supervisorctl reread
+sudo supervisorctl update
+sudo supervisorctl start salvador_expoe
+```
+
+## Backup
+
+O sistema faz backup automático do banco de dados a cada vez que é iniciado. Os backups são armazenados no diretório `backups/` e são mantidos os últimos 5 backups.
+
+Para fazer um backup manual:
+```bash
+python backup_db.py
+```
+
+## Monitoramento
+
+Os logs da aplicação são armazenados em:
+- `logs/django.log` - Logs do Django
+- `logs/gunicorn-access.log` - Logs de acesso do Gunicorn
+- `logs/gunicorn-error.log` - Logs de erro do Gunicorn
+- `logs/backup.log` - Logs de backup
 
 ## Contato
 
