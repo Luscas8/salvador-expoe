@@ -1,5 +1,5 @@
 from django import forms
-from .models import Bairro
+from ..models import Bairro
 
 class ClassificacaoBairrosForm(forms.Form):
     bairro = forms.ModelChoiceField(
