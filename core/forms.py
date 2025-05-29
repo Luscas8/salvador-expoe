@@ -1,5 +1,5 @@
 from django import forms
-from core.models import Bairro
+from .models import Bairro
 
 class ClassificacaoBairrosForm(forms.Form):
     bairro = forms.ModelChoiceField(
@@ -12,7 +12,7 @@ class ClassificacaoBairrosForm(forms.Form):
     criterio = forms.ChoiceField(
         choices=[
             ('media', 'Nota Média'),
-            ('avaliacoes', 'Número de Avaliações'),
+            ('avaliacoes', 'Número de Avaliações')
         ],
         required=False,
         label="Critério de Ordenação"
@@ -21,7 +21,7 @@ class ClassificacaoBairrosForm(forms.Form):
     ordem = forms.ChoiceField(
         choices=[
             ('desc', 'Maior para Menor'),
-            ('asc', 'Menor para Maior'),
+            ('asc', 'Menor para Maior')
         ],
         required=False,
         label="Ordem"
