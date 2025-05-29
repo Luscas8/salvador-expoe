@@ -1,1 +1,1 @@
-from .forms import ClassificacaoBairrosForm 
+from . import ClassificacaoBairrosForm 
