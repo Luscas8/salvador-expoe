@@ -129,3 +129,4 @@ Para contribuir com o projeto:
 ## Contato
 - Lucas Brendo Alves Dos Santos Conceição - [@Luscas8](https://github.com/Luscas8)
 - Letícia Beatriz dos Reis Gomes - [@biaadeveloper](https://github.com/biaadeveloper) 
+- Erick Bispo Nunes [@erickz007](https://github.com/erickz007)
