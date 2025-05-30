@@ -2,27 +2,53 @@ from django import forms
 from ..models import Bairro
 
 class ClassificacaoBairrosForm(forms.Form):
-    bairro = forms.ModelChoiceField(
-        queryset=Bairro.objects.all(),
+    bairro = forms.CharField(
         required=False,
-        empty_label="Todos os bairros",
-        label="Bairro"
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Buscar bairro...'
+        })
     )
-    
     criterio = forms.ChoiceField(
+        required=False,
         choices=[
-            ('media', 'Nota Média'),
+            ('', 'Ordenar por...'),
+            ('media', 'Média'),
             ('avaliacoes', 'Número de Avaliações')
         ],
-        required=False,
-        label="Critério de Ordenação"
+        widget=forms.Select(attrs={'class': 'form-select'})
     )
-    
     ordem = forms.ChoiceField(
+        required=False,
         choices=[
             ('desc', 'Maior para Menor'),
             ('asc', 'Menor para Maior')
         ],
+        widget=forms.Select(attrs={'class': 'form-select'})
+    )
+
+class FiltroBairroForm(forms.Form):
+    bairro = forms.CharField(
         required=False,
-        label="Ordem"
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Buscar bairro...'
+        })
+    )
+    criterio = forms.ChoiceField(
+        required=False,
+        choices=[
+            ('', 'Ordenar por...'),
+            ('media', 'Média'),
+            ('avaliacoes', 'Número de Avaliações')
+        ],
+        widget=forms.Select(attrs={'class': 'form-select'})
+    )
+    ordem = forms.ChoiceField(
+        required=False,
+        choices=[
+            ('desc', 'Maior para Menor'),
+            ('asc', 'Menor para Maior')
+        ],
+        widget=forms.Select(attrs={'class': 'form-select'})
     ) 

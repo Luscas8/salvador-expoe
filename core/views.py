@@ -20,7 +20,7 @@ from pathlib import Path # Certifique-se que Path está importado
 from .models import Bairro, Avaliacao
 from .forms.auth_forms import CadastroForm
 from .forms.bairro_forms import AvaliacaoForm
-from .forms import ClassificacaoBairrosForm
+from .forms import ClassificacaoBairrosForm, FiltroBairroForm
 
 
 class CustomLoginView(LoginView):
@@ -202,74 +202,95 @@ def is_float(value):
 
 
 def classificacao_bairros(request):
-    form = ClassificacaoBairrosForm(request.GET)
-    
-    # Obter dados dos bairros e suas avaliações médias
-    bairros = Bairro.objects.annotate(
+    # Obter todos os bairros com suas médias e contagem de avaliações
+    # Filtrar apenas bairros que foram avaliados (têm pelo menos uma avaliação)
+    bairros_avaliados = Bairro.objects.annotate(
         media=Avg('avaliacoes__nota'),
         total_avaliacoes=Count('avaliacoes')
     ).filter(
-        media__isnull=False,
-        latitude__isnull=False,
-        longitude__isnull=False
-    )
+        total_avaliacoes__gt=0
+    ).order_by('-media')
 
-    # Aplicar filtros do formulário
+    # Calcular total de bairros AVALIADOS
+    total_bairros_avaliados_count = bairros_avaliados.count()
+
+    # Calcular média geral dos bairros avaliados
+    media_geral = bairros_avaliados.aggregate(media=Avg('avaliacoes__nota'))['media'] or 0
+
+    # Calcular total de avaliações nos bairros avaliados
+    total_avaliacoes = bairros_avaliados.aggregate(total=Count('avaliacoes'))['total'] or 0
+
+    # Calcular faixas de avaliação APENAS para bairros avaliados
+    faixas = {
+        'Excelente__9_10_': bairros_avaliados.filter(media__gte=9).count(),
+        'Muito_Bom__7_8_': bairros_avaliados.filter(media__gte=7, media__lt=9).count(),
+        'Bom__5_6_': bairros_avaliados.filter(media__gte=5, media__lt=7).count(),
+        'Regular__3_4_': bairros_avaliados.filter(media__gte=3, media__lt=5).count(),
+        'Ruim__1_2_': bairros_avaliados.filter(media__lt=3).count()
+    }
+
+    # Formulário de filtros
+    form = FiltroBairroForm(request.GET)
+    # Aplicar filtros no queryset de bairros avaliados
+    bairros_filtrados = bairros_avaliados # Começa com os avaliados
+
     if form.is_valid():
-        bairro = form.cleaned_data.get('bairro')
+        bairro_nome = form.cleaned_data.get('bairro')
         criterio = form.cleaned_data.get('criterio')
         ordem = form.cleaned_data.get('ordem')
 
-        if bairro:
-            bairros = bairros.filter(id=bairro.id)
+        if bairro_nome:
+            bairros_filtrados = bairros_filtrados.filter(nome__icontains=bairro_nome)
 
-        if criterio == 'media':
-            bairros = bairros.order_by('-media' if ordem == 'desc' else 'media')
-        elif criterio == 'avaliacoes':
-            bairros = bairros.order_by('-total_avaliacoes' if ordem == 'desc' else 'total_avaliacoes')
-        else:
-            bairros = bairros.order_by('-media')  # Ordenação padrão
+        if criterio:
+            if criterio == 'media':
+                bairros_filtrados = bairros_filtrados.order_by('-media' if ordem == 'desc' else 'media')
+            elif criterio == 'avaliacoes':
+                bairros_filtrados = bairros_filtrados.order_by('-total_avaliacoes' if ordem == 'desc' else 'total_avaliacoes')
 
-    # Filtrar bairros com latitude/longitude realmente válidas
-    bairros = [
-        b for b in bairros
-        if b.latitude not in [None, '', 'None'] and b.longitude not in [None, '', 'None']
-        and is_float(b.latitude) and is_float(b.longitude)
+    # Recalcular total de bairros AVALIADOS e filtrados para a exibição
+    bairros_para_exibicao = bairros_filtrados
+    total_bairros_exibicao = bairros_para_exibicao.count()
+
+    # Calcular estatísticas adicionais com base nos bairros FILTRADOS
+    # total_avaliacoes já foi calculado acima para todos os bairros avaliados
+    # media_avaliacoes_por_bairro pode ser calculado sobre bairros_avaliados
+    media_avaliacoes_por_bairro = total_avaliacoes / total_bairros_avaliados_count if total_bairros_avaliados_count > 0 else 0
+    
+    # Encontrar bairros com mais avaliações (do queryset avaliado)
+    bairros_mais_avaliados = bairros_avaliados.order_by('-total_avaliacoes')[:5]
+    
+    # Encontrar bairros com melhor média (do queryset avaliado)
+    bairros_melhor_media = bairros_avaliados.order_by('-media')[:5]
+    
+    # Calcular tendências (comparando com a média geral dos bairros avaliados)
+    for bairro in bairros_para_exibicao:
+        if bairro.media:
+            bairro.tendencia = 'up' if bairro.media > media_geral else 'down' if bairro.media < media_geral else 'stable'
+
+    # Preparar dados para os gráficos em formato JSON (usando bairros_avaliados para os totais de faixas e bairros_para_exibicao para o top 10)
+    # Os dados das faixas devem refletir a distribuição GERAL dos bairros avaliados, não apenas os filtrados
+    faixas_data = list(faixas.values())
+    # O top 10 deve ser dos bairros filtrados e ordenados
+    top_bairros_data = [
+        {'nome': b.nome, 'media': float(b.media) if b.media is not None else 0}
+        for b in bairros_para_exibicao[:10]
     ]
 
-    # Calcular média geral
-    media_geral = Avaliacao.objects.aggregate(Avg('nota'))['nota__avg'] or 0
-
-    # Preparar dados para o gráfico de pizza
-    faixas = {
-        'Excelente (9-10)': 0,
-        'Muito Bom (7-8)': 0,
-        'Bom (5-6)': 0,
-        'Regular (3-4)': 0,
-        'Ruim (1-2)': 0
-    }
-
-    for bairro in bairros:
-        media = float(bairro.media)
-        if media >= 9:
-            faixas['Excelente (9-10)'] += 1
-        elif media >= 7:
-            faixas['Muito Bom (7-8)'] += 1
-        elif media >= 5:
-            faixas['Bom (5-6)'] += 1
-        elif media >= 3:
-            faixas['Regular (3-4)'] += 1
-        else:
-            faixas['Ruim (1-2)'] += 1
-
     context = {
-        'form': form,
-        'bairros': bairros,
-        'total_bairros': len(bairros),
+        'bairros': bairros_para_exibicao, # Passa os bairros filtrados para a tabela
         'media_geral': media_geral,
-        'faixas': faixas
+        'total_bairros': total_bairros_avaliados_count, # Total de bairros AVALIADOS
+        'total_bairros_exibicao': total_bairros_exibicao, # Total de bairros na tabela após filtros
+        'faixas': faixas, # Faixas dos bairros AVALIADOS
+        'form': form,
+        'total_avaliacoes': total_avaliacoes, # Total de avaliações GERAL
+        'media_avaliacoes_por_bairro': media_avaliacoes_por_bairro,
+        'bairros_mais_avaliados': bairros_mais_avaliados,
+        'bairros_melhor_media': bairros_melhor_media,
+        'faixas_data_json': json.dumps(faixas_data),
+        'top_bairros_data_json': json.dumps(top_bairros_data),
     }
-
     return render(request, 'core/classificacao_bairros.html', context)
 
 

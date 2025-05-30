@@ -78,8 +78,7 @@
                         {% endif %}
                     </div>
                     <div class="card-footer text-muted">
-                        <small>Avaliado por {{ avaliacao.usuario.username }} em {{ avaliacao.data_criacao|date:"d/m/Y"
-                            }}</small>
+                        <small>Avaliado por {{ avaliacao.usuario.username }} em {{ avaliacao.data_criacao|date:"d/m/Y" }}</small>
                     </div>
                 </div>
             </div>
@@ -147,15 +146,13 @@
         dadosHeatmap.forEach(ponto => {
             const [lat, lng, nota] = ponto;
             const marker = L.circleMarker([lat, lng], {
-                radius: 5,
+                radius: 4,
                 fillColor: '#ff7800',
                 color: '#000',
                 weight: 1,
                 opacity: 1,
                 fillOpacity: 0.8
-            }).addTo(mapa);
-            
-            marker.bindPopup(`Nota média: ${nota.toFixed(1)}`);
+            }).addTo(mapa);           
         });
 
         // Ajustar o zoom para mostrar todos os pontos

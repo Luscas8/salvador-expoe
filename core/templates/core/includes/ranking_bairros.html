@@ -1,35 +1,121 @@
 {% load bairro_tags %}
 
-<div class="card">
-    <div class="card-header bg-primary text-white">
-        <h4 class="mb-0">Top {{ ranking_bairros|length }} Bairros</h4>
+<div class="card ranking-card">
+    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+        <h4 class="mb-0">
+            <i class="fas fa-trophy me-2"></i>
+            Top {{ ranking_bairros|length }} Bairros
+        </h4>
+        <span class="badge bg-light text-primary">
+            <i class="fas fa-star me-1"></i>
+            Ranking
+        </span>
     </div>
-    <div class="card-body">
+    <div class="card-body p-0">
         <div class="table-responsive">
-            <table class="table table-hover">
-                <thead>
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
                     <tr>
-                        <th>Posição</th>
+                        <th class="text-center" style="width: 80px;">#</th>
                         <th>Bairro</th>
-                        <th>Média</th>
-                        <th>Avaliações</th>
+                        <th class="text-center" style="width: 120px;">Média</th>
+                        <th class="text-center" style="width: 120px;">Avaliações</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {% for bairro in bairros %}
-                    <tr>
-                        <td>{{ forloop.counter }}</td>
-                        <td>{{ bairro.nome }}</td>
-                        <td>{{ bairro.media|floatformat:1 }}</td>
-                        <td>{{ bairro.total_avaliacoes }}</td>
+                    {% for bairro in ranking_bairros %}
+                    <tr class="{% if forloop.counter <= 3 %}table-warning{% endif %}">
+                        <td class="text-center">
+                            {% if forloop.counter == 1 %}
+                            <span class="badge bg-warning text-dark">
+                                <i class="fas fa-crown"></i>
+                            </span>
+                            {% elif forloop.counter == 2 %}
+                            <span class="badge bg-secondary">
+                                <i class="fas fa-medal"></i>
+                            </span>
+                            {% elif forloop.counter == 3 %}
+                            <span class="badge bg-danger">
+                                <i class="fas fa-award"></i>
+                            </span>
+                            {% else %}
+                            <span class="badge bg-light text-dark">{{ forloop.counter }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-map-marker-alt text-primary me-2"></i>
+                                <span class="fw-bold">{{ bairro.nome }}</span>
+                            </div>
+                        </td>
+                        <td class="text-center">
+                            <span class="badge bg-primary rounded-pill">
+                                <i class="fas fa-star me-1"></i>
+                                {{ bairro.media_nota|floatformat:1 }}
+                            </span>
+                        </td>
+                        <td class="text-center">
+                            <span class="badge bg-info text-dark">
+                                <i class="fas fa-users me-1"></i>
+                                {{ bairro.total_avaliacoes }}
+                            </span>
+                        </td>
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="4" class="text-center">Nenhum bairro avaliado ainda.</td>
+                        <td colspan="4" class="text-center py-4">
+                            <div class="text-muted">
+                                <i class="fas fa-info-circle me-2"></i>
+                                Nenhum bairro avaliado ainda.
+                            </div>
+                        </td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
     </div>
-</div> 
+    <div class="card-footer bg-light">
+        <small class="text-muted">
+            <i class="fas fa-info-circle me-1"></i>
+            Ranking atualizado em tempo real com base nas avaliações dos usuários.
+        </small>
+    </div>
+</div>
+
+<style>
+.ranking-card {
+    border: none;
+    box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+    transition: transform 0.3s ease;
+}
+
+.ranking-card:hover {
+    transform: translateY(-5px);
+}
+
+.table th {
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    letter-spacing: 0.5px;
+}
+
+.table td {
+    vertical-align: middle;
+    padding: 1rem;
+}
+
+.badge {
+    padding: 0.5em 0.8em;
+    font-weight: 500;
+}
+
+.table-warning {
+    background-color: rgba(255, 193, 7, 0.1) !important;
+}
+
+.table-warning:hover {
+    background-color: rgba(255, 193, 7, 0.15) !important;
+}
+</style> 

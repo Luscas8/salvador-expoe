@@ -22,7 +22,7 @@
                     {% endif %}
                 </div>
                 <div class="card-footer text-muted">
-                    <small>Avaliado em {{ avaliacao.data_criacao|date:"d/m/Y" }}</small>
+                    <small>Avaliado por {{ avaliacao.usuario.username }} em {{ avaliacao.data_criacao|date:"d/m/Y" }}</small>
                 </div>
             </div>
         </div>

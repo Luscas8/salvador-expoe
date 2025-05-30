@@ -1,6 +1,6 @@
 # Salvador Expoe
 
-Um projeto Django para avaliação e visualização de bairros de Salvador através de um mapa de calor.
+Um projeto administrado pelo professor RONEY CAMARGO MALAGUTI nas mateias de Desenvolvimento rápido de aplicações em Python e Tópicos de BIG DATA em Python nesse semestre ele desafio a turma para fazer um projeto onde a linguagem predominante seria em python, tivemos a ideia de fazer uma avaliação e visualização de bairros de Salvador que geraria dados, rankings e um mapa de calor.
 
 ## Funcionalidades
 
