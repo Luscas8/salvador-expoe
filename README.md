@@ -120,7 +120,7 @@ Os logs da aplicação são armazenados em:
   
 ## Local Hospedado
 
-(https://luscas8.pythonanywhere.com/)
+https://luscas8.pythonanywhere.com/
 
 ## Contato
 
