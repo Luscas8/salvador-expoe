@@ -119,4 +119,5 @@ Os logs da aplicação são armazenados em:
 
 ## Contato
 
-Lucas Brendo - [@Luscas8](https://github.com/Luscas8) 
+Lucas Brendo ALves Dos Santos Conceição- [@Luscas8](https://github.com/Luscas8) 
+Letícia Beatriz dos Reis Gomes [@biaadeveloper](https://github.com/biaadeveloper)
