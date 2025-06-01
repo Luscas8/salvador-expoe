@@ -129,3 +129,7 @@ Lucas Brendo ALves Dos Santos Conceição- [@Luscas8](https://github.com/Luscas8
 Letícia Beatriz dos Reis Gomes [@biaadeveloper](https://github.com/biaadeveloper)
 
 Erick Bispo Nunes [@erickz007](https://github.com/erickz007)
+
+Luis Felipe Tavares Alencar dos Reis [@tavaresreistk](https://github.com/Tavaresreistk)
+
+Breno de Jesus Guimarães [devbreno01](https://github.com/devbreno01)
