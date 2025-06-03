@@ -117,6 +117,11 @@ Os logs da aplicação são armazenados em:
 - `logs/gunicorn-error.log` - Logs de erro do Gunicorn
 - `logs/backup.log` - Logs de backup
 
+  
+## Local Hospedado
+
+https://luscas8.pythonanywhere.com/
+
 ## Contato
 
 Lucas Brendo ALves Dos Santos Conceição- [@Luscas8](https://github.com/Luscas8) 
@@ -124,3 +129,7 @@ Lucas Brendo ALves Dos Santos Conceição- [@Luscas8](https://github.com/Luscas8
 Letícia Beatriz dos Reis Gomes [@biaadeveloper](https://github.com/biaadeveloper)
 
 Erick Bispo Nunes [@erickz007](https://github.com/erickz007)
+
+Luis Felipe Tavares Alencar dos Reis [@tavaresreistk](https://github.com/Tavaresreistk)
+
+Breno de Jesus Guimarães [@devbreno01](https://github.com/devbreno01)
